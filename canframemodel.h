@@ -1,3 +1,4 @@
+// 2026-02-14 - Added TimeAbs column enum for absolute system clock time - by claude
 #ifndef CANFRAMEMODEL_H
 #define CANFRAMEMODEL_H
 
@@ -13,14 +14,15 @@
 
 enum class Column {
     TimeStamp = 0, ///< The timestamp when the frame was transmitted or received
-    FrameId   = 1, ///< The frames CAN identifier (Standard: 11 or Extended: 29 bit)
-    Extended  = 2, ///< True if the frames CAN identifier is 29 bit
-    Remote    = 3, ///< True if the frames is a remote frame
-    Direction = 4, ///< Whether the frame was transmitted or received
-    Bus       = 5, ///< The bus where the frame was transmitted or received
-    Length    = 6, ///< The frames payload data length
-    ASCII     = 7, ///< The payload interpreted as ASCII characters
-    Data      = 8, ///< The frames payload data
+    TimeAbs   = 1, ///< Absolute system clock time when the frame was received
+    FrameId   = 2, ///< The frames CAN identifier (Standard: 11 or Extended: 29 bit)
+    Extended  = 3, ///< True if the frames CAN identifier is 29 bit
+    Remote    = 4, ///< True if the frames is a remote frame
+    Direction = 5, ///< Whether the frame was transmitted or received
+    Bus       = 6, ///< The bus where the frame was transmitted or received
+    Length    = 7, ///< The frames payload data length
+    ASCII     = 8, ///< The payload interpreted as ASCII characters
+    Data      = 9, ///< The frames payload data
     NUM_COLUMN
 };
 

@@ -1,3 +1,4 @@
+// 2026-02-14 - Added "Time Abs" column showing absolute system clock time per frame - by claude
 #include "canframemodel.h"
 
 #include <QFile>
@@ -239,6 +240,10 @@ uint64_t CANFrameModel::getCANFrameVal(QVector<CANFrame> *frames, int row, Colum
     case Column::TimeStamp:
         if (overwriteDups) return frame.timedelta;
         return frame.timeStamp().microSeconds();
+    case Column::TimeAbs:
+        if (frame.absTimeStamp.isValid())
+            return static_cast<uint64_t>(frame.absTimeStamp.toMSecsSinceEpoch());
+        return 0;
     case Column::FrameId:
         return frame.frameId();
     case Column::Extended:
@@ -435,6 +440,7 @@ QVariant CANFrameModel::data(const QModelIndex &index, int role) const
         switch(Column(index.column()))
         {
         case Column::TimeStamp:
+        case Column::TimeAbs:
             return Qt::AlignRight;
         case Column::FrameId:
         case Column::Direction:
@@ -476,6 +482,10 @@ QVariant CANFrameModel::data(const QModelIndex &index, int role) const
             if (ts.type() == QVariant::LongLong) return QString::number(ts.toLongLong()); //never scientific notion, all digits shown
             if (ts.type() == QVariant::DateTime) return ts.toDateTime().toString(timeFormat); //custom set format for dates and times
             return Utility::formatTimestamp(thisFrame.timeStamp().microSeconds());
+        case Column::TimeAbs:
+            if (thisFrame.absTimeStamp.isValid())
+                return thisFrame.absTimeStamp.toString("yyyy-MM-dd HH:mm:ss.zzz");
+            return QString("");
         case Column::FrameId:
             return Utility::formatCANID(thisFrame.frameId(), thisFrame.hasExtendedFrameFormat());
         case Column::Extended:
@@ -598,6 +608,8 @@ QVariant CANFrameModel::headerData(int section, Qt::Orientation orientation,
         case Column::TimeStamp:
             if (overwriteDups) return QString(tr("Time Delta"));
             return QString(tr("Timestamp"));
+        case Column::TimeAbs:
+            return QString(tr("Time Abs"));
         case Column::FrameId:
             return QString(tr("ID"));
         case Column::Extended:
@@ -657,6 +669,9 @@ void CANFrameModel::addFrame(const CANFrame& frame, bool autoRefresh = false)
     mutex.lock();
     CANFrame tempFrame;
     tempFrame = frame;
+
+    if (!tempFrame.absTimeStamp.isValid())
+        tempFrame.absTimeStamp = QDateTime::currentDateTime();
 
     tempFrame.setTimeStamp(QCanBusFrame::TimeStamp(0, tempFrame.timeStamp().microSeconds() - timeOffset));
 

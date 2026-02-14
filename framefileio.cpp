@@ -1,3 +1,4 @@
+// 2026-02-14 - Added "Time Abs" column to native CSV save/load and continuous logging - by claude
 #include "framefileio.h"
 
 #include <QMessageBox>
@@ -2124,12 +2125,17 @@ bool FrameFileIO::loadNativeCSVFile(QString filename, QVector<CANFrame>* frames)
                     for (int d = 0; d < lng; d++)
                         bytes[d] = static_cast<char>(tokens[5 + d].toInt(nullptr, 16));
                     thisFrame.setPayload(bytes);
+                    //Time Abs would be at index 5 + 8 = 13
+                    if (tokens.length() > 13 && tokens[13].length() > 2)
+                    {
+                        thisFrame.absTimeStamp = QDateTime::fromString(tokens[13].trimmed(), "yyyy-MM-dd HH:mm:ss.zzz");
+                    }
                 }
                 else if (fileVersion == 2)
                 {
                     if (tokens[3].at(0) == 'R') thisFrame.isReceived = true;
                     else thisFrame.isReceived = false;
-                    thisFrame.bus = tokens[4].toInt();                    
+                    thisFrame.bus = tokens[4].toInt();
                     int lng = tokens[5].toInt();
                     if (lng > 8) lng = 8;
                     if (lng < 0) lng = 0;
@@ -2139,6 +2145,11 @@ bool FrameFileIO::loadNativeCSVFile(QString filename, QVector<CANFrame>* frames)
                     for (int d = 0; d < lng; d++)
                         bytes[d] = static_cast<char>(tokens[6 + d].toInt(nullptr, 16));
                     thisFrame.setPayload(bytes);
+                    //Time Abs would be at index 6 + 8 = 14
+                    if (tokens.length() > 14 && tokens[14].length() > 2)
+                    {
+                        thisFrame.absTimeStamp = QDateTime::fromString(tokens[14].trimmed(), "yyyy-MM-dd HH:mm:ss.zzz");
+                    }
                 }
 
                 frames->append(thisFrame);
@@ -2166,7 +2177,7 @@ bool FrameFileIO::saveNativeCSVFile(QString filename, const QVector<CANFrame>* f
         return false;
     }
 
-    outFile->write("Time Stamp,ID,Extended,Dir,Bus,LEN,D1,D2,D3,D4,D5,D6,D7,D8");
+    outFile->write("Time Stamp,ID,Extended,Dir,Bus,LEN,D1,D2,D3,D4,D5,D6,D7,D8,Time Abs");
     outFile->write("\n");
 
     for (int c = 0; c < frames->count(); c++)
@@ -2209,6 +2220,9 @@ bool FrameFileIO::saveNativeCSVFile(QString filename, const QVector<CANFrame>* f
             outFile->putChar(44);
         }
 
+        if (frame->absTimeStamp.isValid())
+            outFile->write(frame->absTimeStamp.toString("yyyy-MM-dd HH:mm:ss.zzz").toUtf8());
+
         outFile->write("\n");
 
     }
@@ -2241,7 +2255,7 @@ bool FrameFileIO::openContinuousNative()
         {
             return false;
         }
-        continuousFile.write("Time Stamp,ID,Extended,Dir,Bus,LEN,D1,D2,D3,D4,D5,D6,D7,D8");
+        continuousFile.write("Time Stamp,ID,Extended,Dir,Bus,LEN,D1,D2,D3,D4,D5,D6,D7,D8,Time Abs");
         continuousFile.write("\n");
         settings.setValue("FileIO/LoadSaveDirectory", dialog.directory().path());
         return true;
@@ -2300,6 +2314,9 @@ bool FrameFileIO::writeContinuousNative(const QVector<CANFrame>* frames, int beg
                 continuousFile.write("00");
             continuousFile.putChar(44);
         }
+
+        if (frame->absTimeStamp.isValid())
+            continuousFile.write(frame->absTimeStamp.toString("yyyy-MM-dd HH:mm:ss.zzz").toUtf8());
 
         continuousFile.write("\n");
     }

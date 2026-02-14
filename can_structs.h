@@ -1,3 +1,4 @@
+// 2026-02-14 - Added absTimeStamp field for absolute system clock time per frame - by claude
 #ifndef CAN_STRUCTS_H
 #define CAN_STRUCTS_H
 
@@ -5,6 +6,7 @@
 #include <QVector>
 #include <stdint.h>
 #include <QCanBusFrame>
+#include <QDateTime>
 
 //Now inherits from the built-in CAN frame class from Qt. This should be more future proof and easier to integrate with other code
 
@@ -15,6 +17,7 @@ public:
     bool isReceived; //did we receive this or send it?
     uint64_t timedelta;
     uint32_t frameCount; //used in overwrite mode
+    QDateTime absTimeStamp; //absolute system clock time when frame was received
 
     friend bool operator<(const CANFrame& l, const CANFrame& r)
     {
@@ -32,6 +35,7 @@ public:
         isReceived = true;
         timedelta = 0;
         frameCount = 1;
+        absTimeStamp = QDateTime();
     }
 };
 
